@@ -8,7 +8,7 @@
 
 **Plugin language:** *en*
 **Author:** [@RustFlash](https://github.com/Flash-Ticker)
-[![RustFlash - Your Favourite Trio Server](https://github.com/Flash-Ticker/SwimmingDrops/blob/main/SwimmingDrops_Thumb.png)](https://www.youtube.com/watch?v=2LsGdJKELsA)
+[![RustFlash - Your Favourite Trio Server](https://github.com/Flash-Ticker/SwimmingDrops/blob/main/SwimmingDrops_Thumb.jpg)](https://www.youtube.com/watch?v=2LsGdJKELsA)
 
 
 ## Description
