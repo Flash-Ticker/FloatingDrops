@@ -5,11 +5,13 @@ using System.Collections.Generic;
 
 namespace Oxide.Plugins
 {
-    [Info("Swimming Drops", "YourName", "1.1.0")]
-    [Description("Keeps supply drops swimming on water after they touch the water surface and ensures parachutes detach")]
+    [Info("SwimmingDrops", "RustFlash", "1.0.0")]
+    [Description("Keeps supply drops swimming smoothly on water after they touch the water surface")]
     public class SwimmingDrops : RustPlugin
     {
         private const float FloatHeight = 0.1f;
+        private const float SmoothTime = 0.5f;
+        private const float LandingThreshold = 0.1f;
         private HashSet<SupplyDrop> activeDrops = new HashSet<SupplyDrop>();
 
         void OnEntitySpawned(SupplyDrop drop)
@@ -46,6 +48,7 @@ namespace Oxide.Plugins
             private SupplyDrop drop;
             private Rigidbody rb;
             private bool isInWater = false;
+            private bool hasLanded = false;
             private SwimmingDrops pluginInstance;
 
             public void Init(SwimmingDrops plugin)
@@ -78,32 +81,41 @@ namespace Oxide.Plugins
 
                 if (isInWater)
                 {
-                    FloatSupplyDrop(waterInfo.surfaceLevel);
+                    if (!hasLanded && HasLanded())
+                    {
+                        hasLanded = true;
+                    }
+
+                    if (hasLanded)
+                    {
+                        SmoothFloatSupplyDrop(waterInfo.surfaceLevel);
+                    }
                 }
             }
 
-            private void FloatSupplyDrop(float waterLevel)
+            private void SmoothFloatSupplyDrop(float waterLevel)
             {
                 var targetY = waterLevel + FloatHeight;
                 var currentY = transform.position.y;
+                
+                float displacementY = targetY - currentY;
+                float buoyancyForce = displacementY * 9.81f * rb.mass;
 
-                if (currentY < targetY)
-                {
-                    var force = (targetY - currentY) * rb.mass * 20f;
-                    rb.AddForce(Vector3.up * force, ForceMode.Force);
-                }
-                else
-                {
-                    rb.AddForce(Vector3.down * rb.mass * 9.81f, ForceMode.Force);
-                }
+                Vector3 smoothedForce = Vector3.up * buoyancyForce * Time.fixedDeltaTime / SmoothTime;
+                rb.AddForce(smoothedForce, ForceMode.Impulse);
 
-                rb.drag = 0.5f;
-                rb.angularDrag = 0.5f;
+                rb.velocity *= 0.98f;
+
+                rb.velocity = new Vector3(rb.velocity.x, Mathf.Clamp(rb.velocity.y, -1f, 1f), rb.velocity.z);
+            }
+
+            private bool HasLanded()
+            {
+                return Mathf.Abs(rb.velocity.y) < LandingThreshold;
             }
 
             private void DetachParachute()
             {
-                // Attempt to detach the parachute
                 var parachute = GetComponentInChildren<Parachute>();
                 if (parachute != null)
                 {
